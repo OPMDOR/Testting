@@ -229,6 +229,12 @@
             color: #155724;
         }
 
+        .result.interviewed {
+            background: linear-gradient(135deg, #cce7ff, #99ceff);
+            border: 2px solid #007bff;
+            color: #004085;
+        }
+
         .result.error {
             background: linear-gradient(135deg, #f8d7da, #f5c6cb);
             border: 2px solid #dc3545;
@@ -279,6 +285,34 @@
         .numbered-list li {
             margin-bottom: 8px;
             line-height: 1.5;
+        }
+
+        .document-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .document-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+        }
+
+        .status-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 10px;
         }
 
         /* Info Section */
@@ -405,6 +439,11 @@
             .detail-value {
                 text-align: left;
             }
+            
+            .document-link {
+                width: 100%;
+                text-align: center;
+            }
         }
 
         /* Extra small devices */
@@ -454,8 +493,8 @@
                     <div class="sub-title">Department Of Refugees</div>
                 </div>
             </div>
-            <div class="system-title">Interview Appointments Schedule</div>
-            <p class="instruction-text">Enter your Group Number to view your interview appointment details</p>
+            <div class="system-title">Case Status & Appointments System</div>
+            <p class="instruction-text">Enter your Group Number to check your interview status or schedule documentation</p>
         </header>
 
         <main>
@@ -465,12 +504,12 @@
                     <input 
                         type="text" 
                         id="registrationId" 
-                        placeholder="Enter Registration Number (e.g., H9B-25-1234567)"
+                        placeholder="Enter Group Number (e.g., H9B-25-1234567)"
                         maxlength="50"
                     >
                     <button onclick="lookupAppointment()" id="searchBtn">
                         <i class="fas fa-search"></i>
-                        Check Appointment
+                        Check Status
                     </button>
                 </div>
                 <div class="example">
@@ -480,7 +519,7 @@
 
             <div id="loading" class="loading">
                 <div class="spinner"></div>
-                <p>Searching for your appointment...</p>
+                <p>Searching for your case status...</p>
             </div>
 
             <div id="result" class="result">
@@ -523,7 +562,7 @@
             }
         });
 
-        // Paste your Excel data here - Format: "Registration Number": "YYYY-MM-DD"
+        // Interview appointments data
         const appointmentData = {
             "H9B-25-6190192": "2025-11-17",
             "H9B-25-6115634": "2025-11-17",
@@ -543,6 +582,19 @@
             // Add more registration numbers and dates from your Excel here
         };
 
+        // People who have already completed interviews (for documentation scheduling)
+        const interviewedCases = {
+            "H9B-25-5000001": "2025-10-15",
+            "H9B-25-5000002": "2025-10-16", 
+            "H9B-25-5000003": "2025-10-17",
+            "H9B-25-5000004": "2025-10-18",
+            "H9B-25-5000005": "2025-10-19"
+            // Add cases that have completed interviews here
+        };
+
+        // Documentation scheduling link (replace with your actual link)
+        const documentationSchedulingLink = "https://forms.office.com/YourDocumentationFormLink";
+
         function lookupAppointment() {
             const regId = document.getElementById('registrationId').value.trim().toUpperCase();
             const resultDiv = document.getElementById('result');
@@ -559,12 +611,56 @@
                 loadingDiv.style.display = 'none';
                 
                 if (!regId) {
-                    showResult('Please enter a Registration Number', 'error');
+                    showResult('Please enter a Group Number', 'error');
                     searchBtn.disabled = false;
                     return;
                 }
 
-                if (appointmentData[regId]) {
+                // Check if case has completed interview (for documentation)
+                if (interviewedCases[regId]) {
+                    const interviewDate = new Date(interviewedCases[regId]);
+                    const formattedInterviewDate = interviewDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    showResult(`
+                        <h3><i class="fas fa-check-double"></i> Interview Completed - Awaiting Decision</h3>
+                        <p>Your refugee status determination interview has been completed. Your case is now under review.</p>
+                        <div class="result-details">
+                            <div class="detail-item">
+                                <span class="detail-label"><i class="fas fa-id-card"></i> Group Number:</span>
+                                <span class="detail-value">${regId}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label"><i class="fas fa-calendar-check"></i> Interview Date:</span>
+                                <span class="detail-value">${formattedInterviewDate}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label"><i class="fas fa-tasks"></i> Current Status:</span>
+                                <span class="detail-value">Interview Completed <span class="status-badge">Under Review</span></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label"><i class="fas fa-file-alt"></i> Next Step:</span>
+                                <span class="detail-value">Documentation & Decision</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.7); border-radius: 10px; text-align: center;">
+                            <h4><i class="fas fa-calendar-plus"></i> Schedule Documentation Appointment</h4>
+                            <p>Your case has been interviewed and is awaiting final decision. Please schedule your documentation appointment using the link below:</p>
+                            <a href="${documentationSchedulingLink}" target="_blank" class="document-link">
+                                <i class="fas fa-external-link-alt"></i> Schedule Documentation Appointment
+                            </a>
+                            <p style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                                <i class="fas fa-info-circle"></i> You will need to bring all original documents for verification.
+                            </p>
+                        </div>
+                    `, 'interviewed');
+                }
+                // Check if case has upcoming interview
+                else if (appointmentData[regId]) {
                     const appointmentDate = new Date(appointmentData[regId]);
                     
                     // Set fixed time to 8:00 AM
@@ -620,12 +716,12 @@
                     `, 'success');
                 } else {
                     showResult(`
-                        <h3><i class="fas fa-exclamation-triangle"></i> Appointment Not Found</h3>
-                        <p>No interview appointment found for Group Number: <strong>${regId}</strong></p>
+                        <h3><i class="fas fa-exclamation-triangle"></i> Case Not Found</h3>
+                        <p>No record found for Group Number: <strong>${regId}</strong></p>
                         <div style="margin-top: 15px;">
                             <ol class="numbered-list">
                                 <li>Please check that you've entered your Group Number correctly.</li>
-                                <li>Your Group number is not currently scheduled for an interview appointment.</li>
+                                <li>Your Group number is not currently in our system for interviews or completed cases.</li>
                                 <li>If you believe this is an error or haven't received an appointment date, visit our office for support.</li>
                             </ol>
                         </div>
@@ -657,9 +753,13 @@
         });
 
         // Instructions for adding more data
-        console.log(`To add more appointment data, paste your Excel data in this format:
+        console.log(`To add more cases, update these objects in the JavaScript:
+        
+        // For upcoming interviews:
         "H9B-25-XXXXXXX": "YYYY-MM-DD",
-        Example: "H9B-25-1234567": "2025-11-19",`);
+        
+        // For completed interviews (documentation scheduling):
+        "H9B-25-XXXXXXX": "YYYY-MM-DD",`);
     </script>
 </body>
 </html>
